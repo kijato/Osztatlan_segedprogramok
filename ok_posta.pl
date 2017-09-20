@@ -1,102 +1,102 @@
 #!/usr/bin/perl
 #
-#	Copyright (c) Kis János Tamás, 2017. február 10.
-#	VERZIOSZAM ='0.32 (2017. április 25.)'
+#	Copyright (c) Kis JÃ¡nos TamÃ¡s, 2017. februÃ¡r 10.
+#	VERZIOSZAM ='0.32 (2017. Ã¡prilis 25.)'
 #
 
 use strict;
 #use warnings;
 #use Encoding;
-use Data::Dumper;
-#use locale; # Ez kell(het) az ABC szerinti helyes rendezéshez.
+#use Data::Dumper;
+#use locale; # Ez kell(het) az ABC szerinti helyes rendezÃ©shez.
 $| = 1; # STDOUT buffer out;
 
-#if ( @ARGV<1 ) { die "Hibás paraméterezés...!" }
+#if ( @ARGV<1 ) { die "HibÃ¡s paramÃ©terezÃ©s...!" }
 if ( @ARGV!=1 ) { die <<END
 
-A program a TAKAROS-Osztatlan moduljából származó, NKP-ra szûrt "vállalkozói"
-adatszolgáltatás (azaz "név szerinti lekérdezés") eredményébõl elõállítja a
-körlevelekhez felhasználható adatforrást.
+A program a TAKAROS-Osztatlan moduljÃ¡bÃ³l szÃ¡rmazÃ³, NKP-ra szÅ±rt "vÃ¡llalkozÃ³i"
+adatszolgÃ¡ltatÃ¡s (azaz "nÃ©v szerinti lekÃ©rdezÃ©s") eredmÃ©nyÃ©bÅ‘l elÅ‘Ã¡llÃ­tja a
+kÃ¶rlevelekhez felhasznÃ¡lhatÃ³ adatforrÃ¡st.
 
-Rendszer-követelmények:
+Rendszer-kÃ¶vetelmÃ©nyek:
 ------------------------
-- Minimális Perl környezet;
+- MinimÃ¡lis Perl kÃ¶rnyezet;
 
-Használat:
+HasznÃ¡lat:
 ----------
 [perl.exe] $0 adatfile.csv
 
 Kimenet:
 --------
-Egy olyan CSV fájl, mely alkalmas a körlevelek adatforrásaként történõ
-felhasználásra. A kimeneti fájl neve a bemeneti fájl nevébõl képzõdik,
-a fájlnév '_$0' karakterekkel történõ kiegészítésével.
+Egy olyan CSV fÃ¡jl, mely alkalmas a kÃ¶rlevelek adatforrÃ¡sakÃ©nt tÃ¶rtÃ©nÅ‘
+felhasznÃ¡lÃ¡sra. A kimeneti fÃ¡jl neve a bemeneti fÃ¡jl nevÃ©bÅ‘l kÃ©pzÅ‘dik,
+a fÃ¡jlnÃ©v '_$0' karakterekkel tÃ¶rtÃ©nÅ‘ kiegÃ©szÃ­tÃ©sÃ©vel.
 
 END
 }
 
 my $riport_file = shift(@ARGV);
-unless (-f $riport_file) { die "\nA(z) '$riport_file' nem létezik...!\n"; }
+unless (-f $riport_file) { die "\nA(z) '$riport_file' nem lÃ©tezik...!\n"; }
 my ($sorszam,$ervenyes_hrsz,$ervenyes_hrszok,$ervenytelen_hrszok)=0;
 my ($hrsz,$nev_cim)='';
 my %adatok;
 
 open FH,$riport_file;
 
-print "A beolvasás indul: ".`time /t`."\n";
+print "A beolvasÃ¡s indul: ".`time /t`."\n";
 while(<FH>) {
 	chomp;
-	print "\tBeolvasott sorok száma: ".++$sorszam."\tétvényes HRSZ-ek száma: ".$ervenyes_hrszok."\térvénytelen HRSZ-ek száma: ".$ervenytelen_hrszok.".\r";
+	print "\tBeolvasott sorok szÃ¡ma: ".++$sorszam."\tÃ©tvÃ©nyes HRSZ-ek szÃ¡ma: ".$ervenyes_hrszok."\tÃ©rvÃ©nytelen HRSZ-ek szÃ¡ma: ".$ervenytelen_hrszok.".\r";
 	my @sor = split(/;/);
-	if($sor[0] == 1 && $sor[17] == 1) { # Ez a 'hrsz' sora és a státusz '1', azaz 'el nem indított eljárás'-ról van szó.
+	if($sor[0] == 1 && $sor[17] == 1) { # Ez a 'hrsz' sora Ã©s a stÃ¡tusz '1', azaz 'el nem indÃ­tott eljÃ¡rÃ¡s'-rÃ³l van szÃ³.
 		$ervenyes_hrsz=1;
 		$ervenyes_hrszok++;
-		if($sor[3] =~ /^k/) {	$sor[4]="0".$sor[4]; } # Ha a fekvés 'k'-val kezdõdik, akkor a hrsz elé beszúrunk egy '0'-át.
+		if($sor[3] =~ /^k/) {	$sor[4]="0".$sor[4]; } # Ha a fekvÃ©s 'k'-val kezdÅ‘dik, akkor a hrsz elÃ© beszÃºrunk egy '0'-Ã¡t.
 		if($sor[5] eq '') {
-			$hrsz = $sor[2].";".$sor[3].";".$sor[4]; # Nincs alátörés a hrsz-ban...
+			$hrsz = $sor[2].";".$sor[3].";".$sor[4]; # Nincs alÃ¡tÃ¶rÃ©s a hrsz-ban...
 		} else {
-			$hrsz = $sor[2].";".$sor[3].";".$sor[4]."/".$sor[5]; # ...van alátörés a hrsz-ban.
+			$hrsz = $sor[2].";".$sor[3].";".$sor[4]."/".$sor[5]; # ...van alÃ¡tÃ¶rÃ©s a hrsz-ban.
 		}
-	} elsif ( $sor[0] == 1 && $sor[17] != 1)   {	$ervenyes_hrsz=0; $ervenytelen_hrszok++; $nev_cim=''; next; # Ez a 'hrsz' sora, de a státusz nem 'el nem indított'
-	} elsif ( $ervenyes_hrsz && $sor[0] == 2 ) {	next; # A '2'-essel kezdõdõ sorok a kérelmezõk adatait tartalmazzák.
-	} elsif ( $ervenyes_hrsz && $sor[0] == 3 ) {	$nev_cim=$sor[1].";".$sor[2]; # A '3'-assal kezdõdõ sorok a tulajdonosok adatait tartalmazzák.
-	} elsif ( $ervenyes_hrsz && $sor[0] == 4 ) {	next; # A '4'-essel kezdõdõ sorok a nem kérelmezõk (visszamaradók) adatait tartalmazzák.
-	} elsif ( !$ervenyes_hrsz )                {	next; # Ha a hrsz sora 'érvénytelen', új sort olvasunk be az adat-fájlból.
-	} else                                     {	die "Ez meg miféle sor lehet...? ($sorszam.)"; # Ilyen eset elvileg nem lehet...
+	} elsif ( $sor[0] == 1 && $sor[17] != 1)   {	$ervenyes_hrsz=0; $ervenytelen_hrszok++; $nev_cim=''; next; # Ez a 'hrsz' sora, de a stÃ¡tusz nem 'el nem indÃ­tott'
+	} elsif ( $ervenyes_hrsz && $sor[0] == 2 ) {	next; # A '2'-essel kezdÅ‘dÅ‘ sorok a kÃ©relmezÅ‘k adatait tartalmazzÃ¡k.
+	} elsif ( $ervenyes_hrsz && $sor[0] == 3 ) {	$nev_cim=$sor[1].";".$sor[2]; # A '3'-assal kezdÅ‘dÅ‘ sorok a tulajdonosok adatait tartalmazzÃ¡k.
+	} elsif ( $ervenyes_hrsz && $sor[0] == 4 ) {	next; # A '4'-essel kezdÅ‘dÅ‘ sorok a nem kÃ©relmezÅ‘k (visszamaradÃ³k) adatait tartalmazzÃ¡k.
+	} elsif ( !$ervenyes_hrsz )                {	next; # Ha a hrsz sora 'Ã©rvÃ©nytelen', Ãºj sort olvasunk be az adat-fÃ¡jlbÃ³l.
+	} else                                     {	die "Ez meg mifÃ©le sor lehet...? ($sorszam.)"; # Ilyen eset elvileg nem lehet...
 	}
 	# push @{$adatok{$hrsz}},$nev_cim;
-	push @{$adatok{$nev_cim}},$hrsz; # A 'nev_cim' kulcshoz tartozó tömbhöz hozzáadjuk a hrsz-t.
-	$nev_cim=''; # Kinullázzuk a 'nev_cim'-et, hogy a következõ sornál biztosan ne okozzon galibát...
+	push @{$adatok{$nev_cim}},$hrsz; # A 'nev_cim' kulcshoz tartozÃ³ tÃ¶mbhÃ¶z hozzÃ¡adjuk a hrsz-t.
+	$nev_cim=''; # KinullÃ¡zzuk a 'nev_cim'-et, hogy a kÃ¶vetkezÅ‘ sornÃ¡l biztosan ne okozzon galibÃ¡t...
 }
 close FH;
-print "\n\nA beolvasás kész: ".`time /t`;
+print "\n\nA beolvasÃ¡s kÃ©sz: ".`time /t`;
 
 #print Dumper \%adatok;
 
-print "\nA feldolgozás indul: ".`time /t`;
-foreach my $kulcs ( keys %adatok ) { # Végigmegyünk a hash-en: fogjuk az egyik kulcsot...
+print "\nA feldolgozÃ¡s indul: ".`time /t`;
+foreach my $kulcs ( keys %adatok ) { # VÃ©gigmegyÃ¼nk a hash-en: fogjuk az egyik kulcsot...
 	my %adat;
-	foreach my $a ( @{$adatok{$kulcs}} ) { # ... végigmegyünk a kulccsal azonosított tömb elemein...
-		$adat{$a}++; # ... megszámoljuk a tömb elemeinek elõfordulásait. (Ebbõl több is lehet, mivel egy hrsz-en belül, egy embernek több bejegyzése is lehet.)
+	foreach my $a ( @{$adatok{$kulcs}} ) { # ... vÃ©gigmegyÃ¼nk a kulccsal azonosÃ­tott tÃ¶mb elemein...
+		$adat{$a}++; # ... megszÃ¡moljuk a tÃ¶mb elemeinek elÅ‘fordulÃ¡sait. (EbbÅ‘l tÃ¶bb is lehet, mivel egy hrsz-en belÃ¼l, egy embernek tÃ¶bb bejegyzÃ©se is lehet.)
 	}
-	$adatok{$kulcs}= \%adat; # Az így készített HASH-sel felülírjuk az eredeti hash-nek az adott kulcshoz tartozó TÖMB-jét! (Azaz itt történik a 'varázslat', ami a többszörös hrsz-ekbõl egyet, pontosabban egy kulcsot csinál és mellékesen a kulcshoz tartozó érték az elõfordulások számát adja vissza.)
+	$adatok{$kulcs}= \%adat; # Az Ã­gy kÃ©szÃ­tett HASH-sel felÃ¼lÃ­rjuk az eredeti hash-nek az adott kulcshoz tartozÃ³ TÃ–MB-jÃ©t! (Azaz itt tÃ¶rtÃ©nik a 'varÃ¡zslat', ami a tÃ¶bbszÃ¶rÃ¶s hrsz-ekbÅ‘l egyet, pontosabban egy kulcsot csinÃ¡l Ã©s mellÃ©kesen a kulcshoz tartozÃ³ Ã©rtÃ©k az elÅ‘fordulÃ¡sok szÃ¡mÃ¡t adja vissza.)
 }
-print "\nA feldolgozás kész: ".`time /t`;
+print "\nA feldolgozÃ¡s kÃ©sz: ".`time /t`;
 
 #print Dumper \%adatok;
 
-print "\nA kiírás indul: ".`time /t`;
-$riport_file=~s/(\.\w*)$//; # Töröljük a kiterjesztést, a '.'-tal együtt. (A '$1' tárolja az eredeti kiterjesztést...)
-open FH,">$riport_file.$0$1" || die "$!\n"; # A szkript aktuális nevét ($0) és az eredeti kiterjesztést ($1) hozzáfûzzük a fájlnévhez.
-binmode FH; # Ez biztosítja a 'nyers' írást a fájlba, enélkül a vezérlõ karakterek nem minden esetben értelmezõdnek megfelelõen.
-print FH "név;cím;hrszek".chr(13).chr(10);
-foreach my $kulcs ( sort keys %adatok ) { # Végigmegyünk a rendezett kulcsokkal a hash-en...
+print "\nA kiÃ­rÃ¡s indul: ".`time /t`;
+$riport_file=~s/(\.\w*)$//; # TÃ¶rÃ¶ljÃ¼k a kiterjesztÃ©st, a '.'-tal egyÃ¼tt. (A '$1' tÃ¡rolja az eredeti kiterjesztÃ©st...)
+open FH,">$riport_file.$0$1" || die "$!\n"; # A szkript aktuÃ¡lis nevÃ©t ($0) Ã©s az eredeti kiterjesztÃ©st ($1) hozzÃ¡fÅ±zzÃ¼k a fÃ¡jlnÃ©vhez.
+binmode FH; # Ez biztosÃ­tja a 'nyers' Ã­rÃ¡st a fÃ¡jlba, enÃ©lkÃ¼l a vezÃ©rlÅ‘ karakterek nem minden esetben Ã©rtelmezÅ‘dnek megfelelÅ‘en.
+print FH "nÃ©v;cÃ­m;hrszek".chr(13).chr(10);
+foreach my $kulcs ( sort keys %adatok ) { # VÃ©gigmegyÃ¼nk a rendezett kulcsokkal a hash-en...
 	#if($kulcs=~/.*;.*;.*/) {next;}
-	if($kulcs eq '' || !defined($kulcs)){next;} # .. ha nincs kulcs, vagy 'üres', akkor 'ugrunk'...
+	if($kulcs eq '' || !defined($kulcs)){next;} # .. ha nincs kulcs, vagy 'Ã¼res', akkor 'ugrunk'...
 
 	#my $sor="$kulcs;\"";
 	
-	# Kulcs minta: "vezetéknév keresztnév;irsz település utca házszám."
+	# Kulcs minta: "vezetÃ©knÃ©v keresztnÃ©v;irsz telepÃ¼lÃ©s utca hÃ¡zszÃ¡m."
 	#               $1                    $2   $3        $4
 	my $sor="$kulcs";
 	$sor=~/(.+);(\d+)\s+(\w+)\s+(.+)/;
@@ -110,38 +110,38 @@ foreach my $kulcs ( sort keys %adatok ) { # Végigmegyünk a rendezett kulcsokkal 
 	print FH "$sor\"".chr(13).chr(10);
 }
 close FH;
-print "\nA kiírás kész: ".`time /t`;
+print "\nA kiÃ­rÃ¡s kÃ©sz: ".`time /t`;
 
 
 __END__
 
 #
-#   A program szabad szoftver, bárki továbbadhatja és/vagy módosíthatja
-#   a legfrissebb GNU General Public Licence feltételei szerint, ahogy
-#   azt a Free Software Foundation közli. A program módosított változatai,
-#   a változatlan másolatokkal megegyezô feltételek alapján másolhatók
-#   és terjeszthetôk, ha a módosított változatot is, az ezzel az enge-
-#   déllyel megegyezô feltételek szerint terjesztik. A lefordított kód
-#   is a módosított változat kategóriájába tartozik. Az üzleti célú
-#   terjesztés NEM MEGENGEDETT. Módosítás és terjesztés elôtt a dolgok
-#   naprakészségének biztosítása végett ajánlott kapcsolatba lépni a
-#   szerzôvel. A program módosítása esetén, kérlek juttatsd el a szerzô-
-#   nek a módosított forráskódot valamilyen formában, hogy a hasznos
-#   változás mihamarabb bekerüljön a szoftver "hivatalos" disztribúció-
-#   jába. A nyomtatott változat jobban néz ki...   :-)
-#   E programot (én, a szerzô) azzal a reménnyel terjesztem, hogy hasznos
-#   lesz, de MINDENFÉLE GARANCIA VÁLLALÁSA NÉLKÜL. A részletek a GNU
-#   General Public Licence-ben találhatók. A programmal együtt kapnod
-#   kellett egy másolatot a GNU General Public Licence-bôl, ha nem kaptál,
-#   írj a következô címre:
+#   A program szabad szoftver, bÃ¡rki tovÃ¡bbadhatja Ã©s/vagy mÃ³dosÃ­thatja
+#   a legfrissebb GNU General Public Licence feltÃ©telei szerint, ahogy
+#   azt a Free Software Foundation kÃ¶zli. A program mÃ³dosÃ­tott vÃ¡ltozatai,
+#   a vÃ¡ltozatlan mÃ¡solatokkal megegyezÃ´ feltÃ©telek alapjÃ¡n mÃ¡solhatÃ³k
+#   Ã©s terjeszthetÃ´k, ha a mÃ³dosÃ­tott vÃ¡ltozatot is, az ezzel az enge-
+#   dÃ©llyel megegyezÃ´ feltÃ©telek szerint terjesztik. A lefordÃ­tott kÃ³d
+#   is a mÃ³dosÃ­tott vÃ¡ltozat kategÃ³riÃ¡jÃ¡ba tartozik. Az Ã¼zleti cÃ©lÃº
+#   terjesztÃ©s NEM MEGENGEDETT. MÃ³dosÃ­tÃ¡s Ã©s terjesztÃ©s elÃ´tt a dolgok
+#   naprakÃ©szsÃ©gÃ©nek biztosÃ­tÃ¡sa vÃ©gett ajÃ¡nlott kapcsolatba lÃ©pni a
+#   szerzÃ´vel. A program mÃ³dosÃ­tÃ¡sa esetÃ©n, kÃ©rlek juttatsd el a szerzÃ´-
+#   nek a mÃ³dosÃ­tott forrÃ¡skÃ³dot valamilyen formÃ¡ban, hogy a hasznos
+#   vÃ¡ltozÃ¡s mihamarabb bekerÃ¼ljÃ¶n a szoftver "hivatalos" disztribÃºciÃ³-
+#   jÃ¡ba. A nyomtatott vÃ¡ltozat jobban nÃ©z ki...   :-)
+#   E programot (Ã©n, a szerzÃ´) azzal a remÃ©nnyel terjesztem, hogy hasznos
+#   lesz, de MINDENFÃ‰LE GARANCIA VÃLLALÃSA NÃ‰LKÃœL. A rÃ©szletek a GNU
+#   General Public Licence-ben talÃ¡lhatÃ³k. A programmal egyÃ¼tt kapnod
+#   kellett egy mÃ¡solatot a GNU General Public Licence-bÃ´l, ha nem kaptÃ¡l,
+#   Ã­rj a kÃ¶vetkezÃ´ cÃ­mre:
 #   Free Software Foundation, Inc. 675 Mass Ave, Cambridge, MA 02139, USA
-#   A program szerzôje a következô címeken érhetô el :
-#   ×----------------------------------------------------------------×
-#   |  Kis János Tamás, E-mail: kijato@gmail.com, kjt@takarnet.hu    |
+#   A program szerzÃ´je a kÃ¶vetkezÃ´ cÃ­meken Ã©rhetÃ´ el :
+#   Ã—----------------------------------------------------------------Ã—
+#   |  Kis JÃ¡nos TamÃ¡s, E-mail: kijato@gmail.com, kjt@takarnet.hu    |
 #   |                   Tel.: (76) 795-810                           |
-#   ×----------------------------------------------------------------×
-#   *================================================================×
-#   |       A PROGRAM SZABADON TERJESZTHETÖ, HA A COPYRIGHT ÉS       |
-#   |         AZ ENGEDÉLY SZÖVEGÉT MINDEN MÁSOLATON MEGÕRZIK.        |
-#   ×================================================================*
+#   Ã—----------------------------------------------------------------Ã—
+#   *================================================================Ã—
+#   |       A PROGRAM SZABADON TERJESZTHETÃ–, HA A COPYRIGHT Ã‰S       |
+#   |         AZ ENGEDÃ‰LY SZÃ–VEGÃ‰T MINDEN MÃSOLATON MEGÅRZIK.        |
+#   Ã—================================================================*
 # 
