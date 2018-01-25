@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #
 #	Copyright (c) Kis János Tamás, 2017. február 10.
-#	VERZIOSZAM ='0.32 (2017. április 25.)'
+#	VERZIOSZAM ='0.40 (2018. január 25.)'
 #
 
 use strict;
@@ -48,21 +48,28 @@ while(<FH>) {
 	chomp;
 	print "\tBeolvasott sorok száma: ".++$sorszam."\tétvényes HRSZ-ek száma: ".$ervenyes_hrszok."\térvénytelen HRSZ-ek száma: ".$ervenytelen_hrszok.".\r";
 	my @sor = split(/;/);
+	# Hrsz-re vonatkozó adatok:
 	if($sor[0] == 1 && $sor[17] == 1) { # Ez a 'hrsz' sora és a státusz '1', azaz 'el nem indított eljárás'-ról van szó.
 		$ervenyes_hrsz=1;
 		$ervenyes_hrszok++;
-		if($sor[3] =~ /^k/) {	$sor[4]="0".$sor[4]; } # Ha a fekvés 'k'-val kezdődik, akkor a hrsz elé beszúrunk egy '0'-át.
-		if($sor[5] eq '') {
-			$hrsz = $sor[2].";".$sor[3].";".$sor[4]; # Nincs alátörés a hrsz-ban...
-		} else {
-			$hrsz = $sor[2].";".$sor[3].";".$sor[4]."/".$sor[5]; # ...van alátörés a hrsz-ban.
+		if($sor[3] =~ /^k/) { $sor[4]="0".$sor[4]; } # Ha a fekvés 'k'-val kezdődik, akkor a hrsz elé beszúrunk egy '0'-át.
+		if($sor[5] eq '') { $hrsz = $sor[2].";".$sor[3].";".$sor[4]; # Ha nincs alátörés a hrsz-ban, akkor megvan a teljes hrsz,
+		} else            { $hrsz = $sor[2].";".$sor[3].";".$sor[4]."/".$sor[5]; # ha van alátörés a hrsz-ban, akkor "összerakjuk".
 		}
-	} elsif ( $sor[0] == 1 && $sor[17] != 1)   {	$ervenyes_hrsz=0; $ervenytelen_hrszok++; $nev_cim=''; next; # Ez a 'hrsz' sora, de a státusz nem 'el nem indított'
-	} elsif ( $ervenyes_hrsz && $sor[0] == 2 ) {	next; # A '2'-essel kezdődő sorok a kérelmezők adatait tartalmazzák.
-	} elsif ( $ervenyes_hrsz && $sor[0] == 3 ) {	$nev_cim=$sor[1].";".$sor[2]; # A '3'-assal kezdődő sorok a tulajdonosok adatait tartalmazzák.
-	} elsif ( $ervenyes_hrsz && $sor[0] == 4 ) {	next; # A '4'-essel kezdődő sorok a nem kérelmezők (visszamaradók) adatait tartalmazzák.
-	} elsif ( !$ervenyes_hrsz )                {	next; # Ha a hrsz sora 'érvénytelen', új sort olvasunk be az adat-fájlból.
-	} else                                     {	die "Ez meg miféle sor lehet...? ($sorszam.)"; # Ilyen eset elvileg nem lehet...
+		next;
+	} elsif ( $sor[0] == 1 && $sor[17] != 1) { # Ez a 'hrsz' sora, de a státusz nem 'el nem indított'
+		$ervenyes_hrsz=0;
+		$ervenytelen_hrszok++;
+		$nev_cim='';
+		next;
+	} else {
+	}
+	# Ügyfelekre vonatkozó adatok:
+	if      ( $ervenyes_hrsz && $sor[0] == 2 ) { next; # A '2'-essel kezdődő sorok a kérelmezők adatait tartalmazzák.
+	} elsif ( $ervenyes_hrsz && $sor[0] == 3 ) { $nev_cim=$sor[1].";".$sor[2]; # A '3'-assal kezdődő sorok a tulajdonosok adatait tartalmazzák, ezt megjegyezzük.
+	} elsif ( $ervenyes_hrsz && $sor[0] == 4 ) { next; # A '4'-essel kezdődő sorok a nem kérelmezők (visszamaradók) adatait tartalmazzák.
+	} elsif ( !$ervenyes_hrsz )                { next; # Ha a hrsz sora 'érvénytelen', új sort olvasunk be az adat-fájlból.
+	} else                                     { die "Ez meg miféle sor lehet...? ($sorszam.)"; # Ilyen eset elvileg nem lehet...
 	}
 	# push @{$adatok{$hrsz}},$nev_cim;
 	push @{$adatok{$nev_cim}},$hrsz; # A 'nev_cim' kulcshoz tartozó tömbhöz hozzáadjuk a hrsz-t.
@@ -79,7 +86,7 @@ foreach my $kulcs ( keys %adatok ) { # Végigmegyünk a hash-en: fogjuk az egyik
 	foreach my $a ( @{$adatok{$kulcs}} ) { # ... végigmegyünk a kulccsal azonosított tömb elemein...
 		$adat{$a}++; # ... megszámoljuk a tömb elemeinek előfordulásait. (Ebből több is lehet, mivel egy hrsz-en belül, egy embernek több bejegyzése is lehet.)
 	}
-	$adatok{$kulcs}= \%adat; # Az így készített HASH-sel felülírjuk az eredeti hash-nek az adott kulcshoz tartozó TÖMB-jét! (Azaz itt történik a 'varázslat', ami a többszörös hrsz-ekből egyet, pontosabban egy kulcsot csinál és mellékesen a kulcshoz tartozó érték az előfordulások számát adja vissza.)
+	$adatok{$kulcs}= \%adat; # Az így készített HASH-sel felülírjuk az eredeti hash-nek az adott kulcshoz tartozó TÖMB-jét! (Azaz itt történik a 'varázslat', ami a többszörös hrsz-ekből 'egy hrsz-t', pontosabban egy kulcsot csinál és mellékesen a kulcshoz tartozó érték az előfordulások számát adja vissza.)
 }
 print "\nA feldolgozás kész: ".`time /t`;
 
@@ -91,23 +98,22 @@ open FH,">$riport_file.$0$1" || die "$!\n"; # A szkript aktuális nevét ($0) é
 binmode FH; # Ez biztosítja a 'nyers' írást a fájlba, enélkül a vezérlő karakterek nem minden esetben értelmeződnek megfelelően.
 print FH "név;cím;hrszek".chr(13).chr(10);
 foreach my $kulcs ( sort keys %adatok ) { # Végigmegyünk a rendezett kulcsokkal a hash-en...
-	#if($kulcs=~/.*;.*;.*/) {next;}
-	if($kulcs eq '' || !defined($kulcs)){next;} # .. ha nincs kulcs, vagy 'üres', akkor 'ugrunk'...
-
-	#my $sor="$kulcs;\"";
-	
+	#if($kulcs eq '' || !defined($kulcs)){next;} # .. ha nincs kulcs, vagy 'üres', akkor 'ugrunk'...
 	# Kulcs minta: "vezetéknév keresztnév;irsz település utca házszám."
 	#               $1                    $2   $3        $4
-	my $sor="$kulcs";
-	$sor=~/(.+);(\d+)\s+(\w+)\s+(.+)/;
-	$sor="$1;\"$3".chr(10).$4.chr(10)."$2\";\"";
-
+	# Ha ez nem illeszkedik, a kulcsot egészében használjuk tovább...
+	my $sor = scalar $kulcs;
+	if($sor=~/(.+);(\d+)\s+(\D+)\s+(.+)/){
+		$sor=$1.';"'.$3.chr(10).$4.chr(10).$2.'";"';
+	} else {
+		$sor=$sor.';"'.chr(10).chr(10).'";"';
+	}
 	foreach my $a ( sort keys %{$adatok{$kulcs}} ) {
 		$a=~s/;/ /g;
 		$sor.=$a.chr(10);
 	}
 	chop($sor);
-	print FH "$sor\"".chr(13).chr(10);
+	print FH $sor.'"'.chr(13).chr(10);
 }
 close FH;
 print "\nA kiírás kész: ".`time /t`;
@@ -137,8 +143,11 @@ __END__
 #   Free Software Foundation, Inc. 675 Mass Ave, Cambridge, MA 02139, USA
 #   A program szerzôje a következô címeken érhetô el :
 #   ×----------------------------------------------------------------×
-#   |  Kis János Tamás, E-mail: kijato@gmail.com, kjt@takarnet.hu    |
-#   |                   Tel.: (76) 795-810                           |
+#   |                                                                |
+#   |    Kis János Tamás <kijato@gmail.com>                          |
+#   |      E-mail: kis.janos@bacs.gov.hu                             |
+#   |      Tel.: (76) 795-810                                        |
+#   |                                                                |
 #   ×----------------------------------------------------------------×
 #   *================================================================×
 #   |       A PROGRAM SZABADON TERJESZTHETÖ, HA A COPYRIGHT ÉS       |
